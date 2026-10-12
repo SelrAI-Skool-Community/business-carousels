@@ -16,7 +16,7 @@ Claude plans, writes and builds layouts, diagrams and charts in HTML or SVG, and
 
 ## Claude Code
 
-1. Paste the installation block from [SETUP-PROMPT.md](SETUP-PROMPT.md) into Claude Code.
+1. Ask Claude Code to follow [SETUP-PROMPT.md](SETUP-PROMPT.md) in this folder. That file is the whole setup.
 2. In Claude Code, type `/business-carousels` or just ask for a carousel; the skill loads when relevant.
 3. For a one-off, you can instead say: "Read ~/.claude/skills/business-carousels/SKILL.md and follow it."
 
@@ -32,7 +32,7 @@ If your account has image generation, ChatGPT can make the slides directly. Chec
 
 ## Codex
 
-1. Paste the installation block from [SETUP-PROMPT.md](SETUP-PROMPT.md) into Codex.
+1. Ask Codex to follow [SETUP-PROMPT.md](SETUP-PROMPT.md) in this folder. That file is the whole setup.
 2. Invoke it with `$business-carousels`, or ask for a carousel and let Codex pick the skill.
 3. For a one-off: "Read ~/.agents/skills/business-carousels/SKILL.md and follow it."
 
