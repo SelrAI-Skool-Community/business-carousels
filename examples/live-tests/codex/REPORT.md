@@ -2,10 +2,10 @@
 
 ## Deliverables
 
-- `01.png` — cover and Brisbane backyard clay-pipe cutaway
-- `02.png` — three-stage root-entry mechanism
-- `03.png` — fictional plumber and homeowner reviewing a drain-camera image
-- `04.png` — three-sign checklist and save CTA
+- `01.jpg` — cover and Brisbane backyard clay-pipe cutaway
+- `02.jpg` — three-stage root-entry mechanism
+- `03.jpg` — fictional plumber and homeowner reviewing a drain-camera image
+- `04.jpg` — three-sign checklist and save CTA
 
 All four files are RGB PNGs at 1120 × 1400 pixels, an exact portrait 4:5 ratio.
 
