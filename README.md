@@ -8,7 +8,7 @@ A skill that helps any AI assistant turn an idea, reel, post or article into a c
 
 | You use | Do this |
 | --- | --- |
-| Claude Code or Codex | Paste the block in [SETUP-PROMPT.md](SETUP-PROMPT.md) into your agent ([download the source prompt](https://raw.githubusercontent.com/SelrAI-Skool-Community/business-carousels/main/SETUP-PROMPT.md)) |
+| Claude Code or Codex | Ask your agent to follow [SETUP-PROMPT.md](SETUP-PROMPT.md) in this folder. It copies the skill into place on a Mac or on Windows |
 | Claude (web or app) or ChatGPT | Paste [PROMPT.md](PROMPT.md) into a chat and attach your files |
 | Anything else | See [QUICKSTART.md](QUICKSTART.md) |
 
@@ -56,7 +56,7 @@ Examples 01 to 15 are fictional demonstrations: invented businesses and generate
 | Item | What it is |
 | --- | --- |
 | `skills/business-carousels/` | The skill: `SKILL.md`, ten reference pages and its own copy of every example |
-| [SETUP-PROMPT.md](SETUP-PROMPT.md) | Copy-paste install for Claude Code and Codex |
+| [SETUP-PROMPT.md](SETUP-PROMPT.md) | The setup for Claude Code and Codex, Mac and Windows: your agent follows it from this folder |
 | [PROMPT.md](PROMPT.md) | One copy-paste prompt that works in any chat |
 | [QUICKSTART.md](QUICKSTART.md) | Setup notes for Claude, Claude Code, ChatGPT and Codex |
 | `examples/` | Full-size originals, phone-size versions and the two live-test carousels |
