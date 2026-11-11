@@ -32,7 +32,7 @@ Read [slide design](references/slide-design.md). Plan headline, imagery, logos, 
 Read [tool routes](references/tool-routes.md). Check this session's real tools; do not assume a model can make photographs, and never install services, ask for keys or switch providers.
 
 - An image tool: generate whole slides as planned, then inspect them.
-- No image tool, or a type-only or photo-led slide: write a plan file and run `slides.py render <plan.json> --out <folder>`. It uses the Chrome or Edge already on the computer, puts headline, support line, label and comment keyword in clear space over a colour or the person's own photo, in their font file if they have one. Set `highlight` to the payoff words of each headline so the brand colour carries through. If it says a slide does not fit, cut words or split the slide.
+- No image tool, or a type-only or photo-led slide: write a plan file and run `slides.py render <plan.json> --out <folder>`. It uses the Chrome or Edge already on the computer, puts headline, support line, label and comment keyword in clear space over a colour or the person's own photo, in their font file if they have one. Set `highlight` to the payoff words of each headline so the brand colour carries through. If it says a slide does not fit, cut words or split the slide. If it cannot start the browser here, make the same slides another way this computer has, keep its `01-<name>.png` names and size, and run `check` on them.
 - No way to make images at all: give the approved copy and one complete generation prompt per slide.
 
 Say which tool made each image.
