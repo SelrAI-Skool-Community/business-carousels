@@ -1,10 +1,12 @@
 """Offline tests for skills/business-carousels/scripts/slides.py.
 Run: python3 -m unittest discover -s tests   (Windows: py -m unittest discover -s tests)"""
 import contextlib
+import html.parser
 import importlib.util
 import io
 import json
 import os
+import re
 import struct
 import tempfile
 import unittest
@@ -35,6 +37,25 @@ def webp(path, w, h):
 
 def snapshot(root):
     return {str(p.relative_to(root)): (p.read_bytes() if p.is_file() else None) for p in sorted(Path(root).rglob("*"))}
+
+
+def font_families(page):
+    """The font-family values from every style attribute, with HTML and CSS escapes undone."""
+    found = []
+
+    class P(html.parser.HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            for k, v in attrs:
+                if k == "style" and "font-family:" in v:
+                    found.append(v)
+
+    P().feed(page)
+    out = []
+    for style in found:
+        m = re.search(r'font-family:("(?:[^"\\]|\\.)*")', style)
+        if m:
+            out.append(re.sub(r"\\([0-9a-f]{1,6}) ?", lambda h: chr(int(h.group(1), 16)), m.group(1)[1:-1]))
+    return out
 
 
 def run(*argv):
@@ -141,6 +162,30 @@ class Plans(Base):
         page, _ = slides.slide_html(p, 0)
         self.assertIn('<span style="color:#F5C518">Here&#x27;s why.</span>', page)
 
+    def test_font_names_cannot_break_out_of_the_page(self):
+        names = ['Bad"Font', "Bad'Font", "Bad\\Font", "</style><script>alert(1)</script>", "Brand Sans"]
+        for name in names:
+            with self.subTest(name=name):
+                p = slides.check_plan(self.plan(brand={"font": name, "body_font": name, "handle": "@shop"},
+                                                slides=[{"label": "One", "headline": "Hi", "support": "There"}]), self.root)
+                page, _ = slides.slide_html(p, 0)
+                self.assertEqual(page.count("<script"), 1, "only the fitting script")
+                self.assertEqual(page.count("</style"), 1)
+                families = font_families(page)
+                self.assertEqual(len(families), 4, "label, headline, support and handle")
+                self.assertEqual(set(families), {name})
+        for bad in ["Bad\nFont", "Bad\x00Font", "Bad\x7fFont", 12]:
+            with self.subTest(bad=bad):
+                with self.assertRaises(slides.Stop) as ctx:
+                    slides.check_plan(self.plan(brand={"font": bad}), self.root)
+                self.assertIn('brand "font" must be the plain name', str(ctx.exception))
+
+    def test_the_handle_is_part_of_the_fitting_check(self):
+        p = slides.check_plan(self.plan(brand={"handle": "@shop"}), self.root)
+        page, _ = slides.slide_html(p, 0)
+        self.assertRegex(page, r'<div id="handle" data-min="0\.933"[^>]*white-space:nowrap')
+        self.assertIn("getElementById('handle')", page)
+
     def test_text_colour_always_reads_on_the_background(self):
         self.assertEqual(slides.readable_text("#F5C518", "#F5F0EB"), "#111111")
         self.assertEqual(slides.readable_text("#F5C518", "#0B1F33"), "#F5C518")
@@ -164,6 +209,71 @@ class Files(Base):
         self.assertEqual(len(moved), 1)
         self.assertEqual(moved[0].read_bytes(), first)
         self.assertEqual(sorted(p.name for p in (project / "final").iterdir()), ["01-drain-tips.png"])
+
+    def test_finalise_twice_changes_nothing_the_second_time(self):
+        project = self.root / "proj"
+        (project / "trials").mkdir(parents=True)
+        png(project / "trials" / "a.png", 1080, 1350)
+        png(project / "trials" / "b.png", 1080, 1350)
+        files = [project / "trials" / "a.png", project / "trials" / "b.png"]
+        slides.finalise(files, project, "x", "instagram-portrait", log=lambda *_: None)
+        before = snapshot(project)
+        logged = []
+        slides.finalise(files, project, "x", "instagram-portrait", log=logged.append)
+        self.assertEqual(snapshot(project), before)
+        self.assertIn("Unchanged", logged[0])
+        self.assertFalse((project / "alternates").exists())
+        code, out = run("finalise", *map(str, files), "--project", str(project), "--name", "x", "--platform", "instagram-portrait", "--dry-run")
+        self.assertIn("Unchanged", out)
+        self.assertEqual(snapshot(project), before)
+
+    def test_finalise_leaves_something_else_in_the_way_alone(self):
+        project = self.root / "proj"
+        (project / "final" / "01-x.png").mkdir(parents=True)
+        (project / "final" / "notes.txt").write_text("mine")
+        png(self.root / "a.png", 1080, 1350)
+        before = snapshot(project)
+        with self.assertRaises(slides.Stop) as ctx:
+            slides.finalise([self.root / "a.png"], project, "x", "instagram-portrait", log=lambda *_: None)
+        self.assertIn("01-x.png", str(ctx.exception))
+        self.assertIn("left alone", str(ctx.exception))
+        self.assertEqual(snapshot(project), before)
+
+    def test_writes_use_a_new_temporary_file_and_never_replace(self):
+        folder = self.root / "final"
+        folder.mkdir()
+        png(self.root / "a.png", 1080, 1350)
+        # The person's own files with the names an older version used for its temporary file.
+        (folder / ".01-x.png.tmp").write_text("mine")
+        os.symlink(self.root / "elsewhere.png", folder / ".02-x.png.tmp")
+        slides.write_new(self.root / "a.png", folder / "01-x.png")
+        slides.write_new(self.root / "a.png", folder / "02-x.png")
+        self.assertEqual((folder / "01-x.png").read_bytes(), (self.root / "a.png").read_bytes())
+        self.assertEqual((folder / ".01-x.png.tmp").read_text(), "mine")
+        self.assertFalse((self.root / "elsewhere.png").exists())
+        self.assertEqual(sorted(p.name for p in folder.iterdir()), [".01-x.png.tmp", ".02-x.png.tmp", "01-x.png", "02-x.png"])
+        # Something already there is refused, not replaced, and no temporary file is left.
+        (folder / "03-x.png").write_text("mine too")
+        with self.assertRaises(slides.Stop):
+            slides.write_new(self.root / "a.png", folder / "03-x.png")
+        self.assertEqual((folder / "03-x.png").read_text(), "mine too")
+        self.assertEqual(len(list(folder.iterdir())), 5)
+
+    def test_an_interrupted_copy_leaves_no_partial_slide(self):
+        folder = self.root / "out"
+        folder.mkdir()
+        png(self.root / "a.png", 1080, 1350)
+        real = slides.shutil.copyfileobj
+
+        def broken(src, dst, *a):
+            dst.write(src.read(100))
+            raise OSError("disk full")
+
+        slides.shutil.copyfileobj = broken
+        self.addCleanup(setattr, slides.shutil, "copyfileobj", real)
+        with self.assertRaises(OSError):
+            slides.write_new(self.root / "a.png", folder / "01-x.png")
+        self.assertEqual(list(folder.iterdir()), [])
 
     def test_finalise_stops_on_a_wrong_size_and_changes_nothing(self):
         project = self.root / "proj"
@@ -261,11 +371,25 @@ class Render(Base):
         self.assertEqual(names, ["01-drain-tips.png", "02-drain-tips.png"])
         for n in names:
             self.assertEqual(slides.image_size(self.root / "out" / n), (1080, 1350))
+        before = snapshot(self.root / "out")
+        logged = []
+        slides.render(plan, self.root / "out", log=logged.append)
+        self.assertEqual(snapshot(self.root / "out"), before, "a second run with the same plan changes nothing")
+        self.assertTrue(any("Unchanged" in line for line in logged))
         long = slides.check_plan({"name": "long", "slides": [{"headline": "Why " * 60, "support": "words " * 120}]}, self.root)
         with self.assertRaises(slides.Stop) as ctx:
             slides.render(long, self.root / "out2", log=lambda *_: None)
         self.assertIn("do not fit", str(ctx.exception))
         self.assertFalse((self.root / "out2").exists())
+
+    def test_a_handle_too_long_for_the_slide_saves_nothing(self):
+        plan = slides.check_plan({"name": "handle", "brand": {"handle": "@" + "harbourplumbingandgas" * 6},
+                                  "slides": [{"headline": "Short"}]}, self.root)
+        with self.assertRaises(slides.Stop) as ctx:
+            slides.render(plan, self.root / "out", log=lambda *_: None)
+        self.assertIn("handle", str(ctx.exception))
+        self.assertIn("too long", str(ctx.exception))
+        self.assertFalse((self.root / "out").exists())
 
 
 if __name__ == "__main__":

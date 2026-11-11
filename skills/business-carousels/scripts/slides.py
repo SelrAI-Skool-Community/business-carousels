@@ -29,12 +29,15 @@ A plan for `render` (paths are relative to the plan file; only "headline" is req
 
 "place" is top, center or bottom. "highlight" is words in the headline to print in the
 brand accent colour, usually the payoff. "keyword" is a comment word to box in the accent. Without a font file, "font" names an installed font.
+The footer "handle" stays on one line inside the margins; one too long to fit fails the slide like other text.
 Text is sized as large as fits and never below about 20 points (headline) or 12
 points (other text) on a phone; a slide that cannot fit saves nothing and says so.
 Files come out as 01-<name>.png, 02-<name>.png ... at the platform's exact size.
+Running render or finalise again with the same inputs reports "unchanged" and writes nothing.
 """
 import argparse
 import base64
+import filecmp
 import html
 import json
 import os
@@ -61,6 +64,8 @@ PLATFORMS = {
 # these floors keep text at about 20, 12 and 10 points there.
 FLOOR = {"headline": 56, "support": 32, "label": 28}
 BASE = {"headline": 112, "support": 42, "label": 34}
+# The footer handle: 30 pixels, never below the label floor.
+HANDLE_BASE, HANDLE_FLOOR = 30, FLOOR["label"]
 IMAGE_TYPES = {".png", ".jpg", ".jpeg", ".webp"}
 
 
@@ -210,6 +215,9 @@ def check_plan(plan, base=Path(".")):
     for key in ("background", "text", "accent"):
         if key in brand and not is_hex(brand[key]):
             errors.append(f'brand "{key}" must be a colour like #1D4E89, not {brand[key]!r}.')
+    for key in ("font", "body_font"):
+        if brand.get(key) and not (isinstance(brand[key], str) and not _has_control(brand[key])):
+            errors.append(f'brand "{key}" must be the plain name of an installed font, not {brand[key]!r}.')
     for key in ("font_file", "body_font_file"):
         if brand.get(key) and not (base / Path(os.path.expanduser(brand[key]))).is_file():
             errors.append(f"The font file {brand[key]} is not there.")
@@ -238,6 +246,19 @@ def check_plan(plan, base=Path(".")):
     return plan
 
 
+def _has_control(text):
+    return any(ord(c) < 32 or 127 <= ord(c) < 160 for c in text)
+
+
+def css_string(name):
+    """A font name as a quoted CSS string that is also safe inside HTML.
+    Anything but letters, digits, space, hyphen and underscore becomes a CSS hex escape,
+    so quotes, backslashes and "</style>" cannot end the string, the rule or the page."""
+    if not isinstance(name, str) or _has_control(name):
+        raise Stop(f"The font name {name!r} has characters a font name cannot have.")
+    return '"' + "".join(c if c.isascii() and (c.isalnum() or c in " -_") else f"\\{ord(c):x} " for c in name) + '"'
+
+
 def _data_url(path):
     ext = path.suffix.lower().lstrip(".")
     mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp",
@@ -264,6 +285,23 @@ document.fonts.ready.then(() => {
     if (over()) result = 'nofit';
     else { for (let i = 0; i < 14; i++) { const m = (lo + hi) / 2; set(m); if (over()) hi = m; else lo = m; } set(lo); }
   }
+  // The footer handle stays on one line inside the side margins. It shrinks to its
+  // floor if it must; past that the slide does not fit.
+  const hd = document.getElementById('handle');
+  if (hd && result === 'ok') {
+    const hover = () => {
+      const r = hd.getBoundingClientRect();
+      return hd.scrollWidth > hd.clientWidth + 1 || r.left < safe.left - 1 || r.right > safe.right + 1;
+    };
+    const hset = v => hd.style.setProperty('--h', v);
+    let hlo = parseFloat(hd.dataset.min), hhi = 1;
+    hset(hhi);
+    if (hover()) {
+      hset(hlo);
+      if (hover()) result = 'nohandle';
+      else { for (let i = 0; i < 10; i++) { const m = (hlo + hhi) / 2; hset(m); if (hover()) hhi = m; else hlo = m; } hset(hlo); }
+    }
+  }
   const s = parseFloat(getComputedStyle(el).getPropertyValue('--s'));
   document.title = 'FIT ' + result + ' ' + s.toFixed(3);
   document.body.dataset.fit = result;
@@ -286,12 +324,14 @@ def slide_html(plan, index):
         faces.append(f"@font-face {{ font-family: 'BrandHead'; src: url({_data_url(base / os.path.expanduser(b['font_file']))}); }}")
         head_font = "'BrandHead', sans-serif"
     elif b.get("font"):
-        head_font = f"'{b['font']}', system-ui, sans-serif"
+        head_font = f"{css_string(b['font'])}, system-ui, sans-serif"
     if b.get("body_font_file"):
         faces.append(f"@font-face {{ font-family: 'BrandBody'; src: url({_data_url(base / os.path.expanduser(b['body_font_file']))}); }}")
         body_font = "'BrandBody', sans-serif"
     elif b.get("body_font"):
-        body_font = f"'{b['body_font']}', system-ui, sans-serif"
+        body_font = f"{css_string(b['body_font'])}, system-ui, sans-serif"
+    # The font stacks only go into style="..." attributes, so escape them for that too.
+    head_font, body_font = html.escape(head_font, quote=True), html.escape(body_font, quote=True)
     place = s.get("place", "bottom")
     pad = round(72 * u)
     if s.get("image"):
@@ -333,8 +373,9 @@ def slide_html(plan, index):
     parts.append(f'<div style="{sized("headline", f"font-family:{head_font};font-weight:800;line-height:1.02;letter-spacing:-0.01em;color:{text};overflow-wrap:normal;word-break:normal")}">{headline}</div>')
     if support:
         parts.append(f'<div style="{sized("support", f"font-family:{body_font};font-weight:500;line-height:1.35;color:{text};opacity:0.92;margin-top:calc(var(--s) * {26*u:.1f}px)")}">{support}</div>')
-    handle = (f'<div style="position:absolute;left:{pad}px;bottom:{round(48*u)}px;font-family:{body_font};font-weight:700;'
-              f'font-size:{round(30*u)}px;color:{text};opacity:0.9">{html.escape(b["handle"])}</div>') if b.get("handle") else ""
+    handle = (f'<div id="handle" data-min="{HANDLE_FLOOR / HANDLE_BASE:.3f}" style="--h:1;position:absolute;left:{pad}px;right:{pad}px;bottom:{round(48*u)}px;'
+              f'font-family:{body_font};font-weight:700;white-space:nowrap;overflow:hidden;'
+              f'font-size:calc(var(--h) * {HANDLE_BASE * u:.1f}px);color:{text};opacity:0.9">{html.escape(b["handle"])}</div>') if b.get("handle") else ""
     return f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>slide</title><style>
 {"".join(faces)}
 * {{ margin:0; padding:0; box-sizing:border-box; font-synthesis:none; }}
@@ -389,6 +430,7 @@ def _browser(browser, args, timeout=60):
 def render(plan, out, browser=None, dry_run=False, log=print):
     w, h, _, label = platform(plan.get("platform", "instagram-portrait"))
     name = slug(plan.get("name", "carousel"))
+    b_handle = (plan.get("brand") or {}).get("handle")
     out = Path(out)
     names = [f"{i + 1:02d}-{name}.png" for i in range(len(plan["slides"]))]
     for note in plan.get("_notes", []):
@@ -414,6 +456,9 @@ def render(plan, out, browser=None, dry_run=False, log=print):
             m = re.search(r"<title>FIT (\w+)", dom.stdout or "")
             if not m:
                 raise Stop(f"The browser did not finish drawing slide {i + 1}: {(dom.stderr or '').strip()[:300]}")
+            if m.group(1) == "nohandle":
+                problems.append(f"Slide {i + 1}: the handle {b_handle!r} is too long to fit across the slide, even at the smallest size that reads on a phone. Use a shorter handle.")
+                continue
             if m.group(1) != "ok":
                 problems.append(f"Slide {i + 1}: the words do not fit even at the smallest size that reads on a phone. Cut words or split the slide.")
                 continue
@@ -427,11 +472,19 @@ def render(plan, out, browser=None, dry_run=False, log=print):
         if problems:
             raise Stop("Nothing was saved, because:\n" + "\n".join(f"  - {p}" for p in problems))
         out.mkdir(parents=True, exist_ok=True)
+        current = earlier_files(out, name)
+        if sorted(p.name for p in current) == sorted(names) and all(same_bytes(work / n, out / n) for n in names):
+            log(f"Unchanged: the {len(names)} slide(s) in {out} are already exactly these. Nothing was written or moved.")
+            return names
+        blocked = [n for n in names if os.path.lexists(out / n) and not (out / n).is_file()]
+        if blocked:
+            raise Stop(f"Nothing was saved: {', '.join(blocked)} in {out} is not a slide image this script made, "
+                       "so it was left alone. Move it, or render into another folder.")
         moved = set_aside(out, name)
         if moved:
             log(f"The earlier render of these slides is now in {moved}")
         for n in names:
-            shutil.copy2(work / n, out / n)
+            write_new(work / n, out / n)
         log(f"Saved {len(names)} slide(s), {w}x{h} each, in posting order, in {out}")
         return names
     finally:
@@ -442,10 +495,46 @@ def _stamp():
     return time.strftime("%Y%m%d-%H%M%S")
 
 
+def same_bytes(a, b):
+    return filecmp.cmp(a, b, shallow=False)
+
+
+def write_new(src, dest):
+    """Copy src to dest, which must not exist yet: a complete copy in a temporary file of
+    this run's own beside dest, then put in place by a step that never replaces anything."""
+    dest = Path(dest)
+    fd, tmp = tempfile.mkstemp(dir=dest.parent, prefix=f".{dest.name}.", suffix=".tmp")  # created new, unique
+    try:
+        with os.fdopen(fd, "wb") as f, open(src, "rb") as s:
+            shutil.copyfileobj(s, f)
+            f.flush()
+            os.fsync(f.fileno())
+        shutil.copystat(src, tmp)
+        try:
+            os.link(tmp, dest)  # fails if anything is at dest; never replaces it
+        except FileExistsError:
+            raise Stop(f"{dest} appeared while saving, so it was left alone and this slide was not saved.")
+        except OSError:
+            # A drive without hard links. Rename never replaces on Windows; elsewhere check first.
+            if os.path.lexists(dest):
+                raise Stop(f"{dest} appeared while saving, so it was left alone and this slide was not saved.")
+            os.rename(tmp, dest)
+    finally:
+        try:
+            os.unlink(tmp)  # only the temporary file this run created
+        except FileNotFoundError:
+            pass
+
+
+def earlier_files(folder, name):
+    """This carousel's numbered files in a folder, and nothing else."""
+    pattern = re.compile(rf"^\d{{2}}-{re.escape(name)}\.png$")
+    return sorted(p for p in Path(folder).iterdir() if p.is_file() and pattern.match(p.name))
+
+
 def set_aside(folder, name):
     """Move this carousel's earlier numbered files into earlier/<time>/. Nothing else moves."""
-    pattern = re.compile(rf"^\d{{2}}-{re.escape(name)}\.png$")
-    old = sorted(p for p in Path(folder).iterdir() if p.is_file() and pattern.match(p.name))
+    old = earlier_files(folder, name)
     if not old:
         return None
     dest = Path(folder) / "earlier" / _stamp()
@@ -461,7 +550,8 @@ def set_aside(folder, name):
 
 def finalise(files, project, name, platform_name, dry_run=False, log=print):
     """Copy approved files, in the order given, to <project>/final/NN-<name>.<ext>.
-    Earlier finals move to alternates/replaced-<time>/ first; nothing is overwritten."""
+    Earlier finals move to alternates/replaced-<time>/ first; nothing is overwritten.
+    If final/ already holds exactly these files, nothing is written or moved."""
     problems = check_images(files, platform_name)
     if problems:
         raise Stop("Not finalised, because:\n" + "\n".join(f"  - {p}" for p in problems))
@@ -474,6 +564,13 @@ def finalise(files, project, name, platform_name, dry_run=False, log=print):
     if any(s.parent == final.resolve() for s in sources):
         raise Stop(f"These files are already in {final}. Give the approved files from where they were made.")
     existing = sorted(p for p in final.iterdir() if p.is_file()) if final.is_dir() else []
+    if sorted(existing) == sorted(targets) and all(same_bytes(s, t) for s, t in zip(sources, targets)):
+        log(f"Unchanged: {final} already holds exactly these {len(targets)} slide(s). Nothing was written or moved.")
+        return targets
+    blocked = [t.name for t in targets if os.path.lexists(t) and not t.is_file()]
+    if blocked:
+        raise Stop(f"Not finalised: {', '.join(blocked)} in {final} is not a slide image, so it was left alone. "
+                   "Move it, then finalise again.")
     aside = Path(project) / "alternates" / f"replaced-{_stamp()}"
     if dry_run:
         if existing:
@@ -489,12 +586,10 @@ def finalise(files, project, name, platform_name, dry_run=False, log=print):
         aside.mkdir(parents=True)
         for p in existing:
             p.rename(aside / p.name)
-        log(f"Moved the earlier final files to {aside}")
+        log(f"Moved the earlier final files ({', '.join(p.name for p in existing)}) to {aside}")
     final.mkdir(parents=True, exist_ok=True)
     for s, t in zip(sources, targets):
-        tmp = t.with_name(f".{t.name}.tmp")
-        shutil.copy2(s, tmp)
-        os.replace(tmp, t)
+        write_new(s, t)
     log(f"{len(targets)} slide(s) in {final}, numbered in posting order:")
     for t in targets:
         log(f"  {t.name}")
