@@ -1,6 +1,6 @@
 # Quality checks
 
-Check the actual exported files, not the prompt. View each slide at full size, then at phone size (about 430 px wide). A contact sheet is for navigation only.
+Check the actual exported files, not the prompt. First run `scripts/slides.py check <folder> --platform <name>`: it names any file of the wrong size or shape, too many slides, or slides out of order. Then view each slide at full size, then at phone size (about 430 px wide). A contact sheet is for navigation only.
 
 ## Words and facts
 
@@ -34,7 +34,7 @@ Check the actual exported files, not the prompt. View each slide at full size, t
 - [ ] The comment keyword (if any) is visually highlighted and identical in artwork and caption.
 - [ ] The promised resource exists; any delivery automation is confirmed or not implied.
 - [ ] Approved scenes were preserved in wording-only revisions.
-- [ ] `final/`, `alternates/` and `trials/` are separate; finals are numbered in posting order.
+- [ ] `final/`, `alternates/` and `trials/` are separate; finals are numbered in posting order (`scripts/slides.py finalise` does this).
 
 ## Report honestly
 

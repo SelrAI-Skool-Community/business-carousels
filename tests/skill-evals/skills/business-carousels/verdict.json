@@ -1,0 +1,17 @@
+{
+  "skill": "business-carousels",
+  "verdict": "good",
+  "model": "claude-sonnet-5-5",
+  "judge": "sonnet",
+  "runs": 3,
+  "words": 643,
+  "skillHash": "130f0e27db99c91a",
+  "suiteHash": "0ce07174866419e5",
+  "cases": {
+    "no-image-tool": {"with":1,"without":1,"loaded":1},
+    "plan-first": {"with":1,"without":0,"loaded":1},
+    "wrong-size": {"with":1,"without":1,"loaded":1}
+  },
+  "checked": "2026-11-11",
+  "claude": "2.1.322"
+}

@@ -6,7 +6,7 @@ This file is written to you, the attendee's AI agent (Claude Code or Codex). Fol
 
 **How to work.** The attendee is not a developer. Do all of this yourself: run the commands, do not hand them over, and do not ask for a go-ahead. Explain each step in one plain sentence as it finishes. The only place you might pause is a restart at the end, if the skill does not show up yet. If a step fails, show the real error, fix it yourself and try again; never report a failed step as done. Never ask the attendee for a password, a sign-in, an account, a token or a code: nothing here needs one.
 
-**What the attendee should expect.** Under five minutes. The skill is a folder of instructions, reference pages and fifteen example images (about 5MB). It needs no extra runtime, account or API key, and it never posts or publishes anything. It uses whatever image tools the attendee's app already has; those may have their own plan limits or charges, and when no image tool is available the skill says so and writes a complete image prompt instead.
+**What the attendee should expect.** Under five minutes. The skill is a folder of instructions, reference pages, one small Python script and fifteen example images (about 5MB). It needs no account or API key and installs nothing; its script uses the Python and the Chrome or Edge already on the computer when they are there. It never posts or publishes anything. It uses whatever image tools the attendee's app already has; those may have their own plan limits or charges, and when no image tool is available the skill says so and writes a complete image prompt instead.
 
 ## 0. Work out where you are (do not ask)
 
@@ -226,7 +226,19 @@ Write-Host "COPIED: the business-carousels skill to $Dest"
 
 ## 2. Prove it landed
 
-Check that `<skill folder>/business-carousels` has `SKILL.md` (with `name: business-carousels` in its frontmatter), the ten pages in `references/` (`brand-and-identity.md`, `cta-and-revisions.md`, `example-prompts.md`, `examples.md`, `people.md`, `qa.md`, `slide-design.md`, `source-and-plan.md`, `style-options.md`, `tool-routes.md`) and the fifteen example images plus `index.json` in `assets/examples/`. If anything is missing, run step 1 again; do not go on until all of it is there.
+Check that `<skill folder>/business-carousels` has `SKILL.md` (with `name: business-carousels` in its frontmatter), `scripts/slides.py`, the ten pages in `references/` (`brand-and-identity.md`, `cta-and-revisions.md`, `example-prompts.md`, `examples.md`, `people.md`, `qa.md`, `slide-design.md`, `source-and-plan.md`, `style-options.md`, `tool-routes.md`) and the fifteen example images plus `index.json` in `assets/examples/`. If anything is missing, run step 1 again; do not go on until all of it is there.
+
+Then run the skill's self test, which renders one slide in a temporary folder and deletes it:
+
+```bash
+python3 ~/.claude/skills/business-carousels/scripts/slides.py selftest
+```
+
+Windows PowerShell: `py "$HOME\.claude\skills\business-carousels\scripts\slides.py" selftest` (or `python` if `py` is missing). In Codex, use the `.agents` skill folder.
+
+- `ok: rendered a 1080x1350 test slide` means the skill can draw slides at the exact size with the browser already on this computer.
+- A line saying no Chrome, Edge, Chromium or Brave was found means slides cannot be drawn in code here; everything else works. Tell them in one line.
+- If Python itself is missing, the skill still plans and writes prompts, but cannot draw or size-check slides. Tell them in one line that installing Python 3 from python.org (Windows: the Microsoft Store's Python, or python.org) adds that; do not install it unasked.
 
 Then check your own list of available skills. If `business-carousels` is not listed yet, tell the attendee to restart Claude, and that a new session will have it. That restart is the only pause here.
 
@@ -236,7 +248,7 @@ Tell the attendee in two plain sentences how to start a carousel: open a new ses
 
 ## How the attendee knows it worked
 
-Ask it to plan a carousel for a real customer question. They should get a slide-by-slide plan before any image is generated, where each slide has one clear point and every number keeps its units and context.
+The self test said `ok`, and asking it to plan a carousel for a real customer question gives a slide-by-slide plan before any image is made, where each slide has one clear point and every number keeps its units and context.
 
 ## If it stalls
 

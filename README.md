@@ -55,7 +55,7 @@ Examples 01 to 15 are fictional demonstrations: invented businesses and generate
 
 | Item | What it is |
 | --- | --- |
-| `skills/business-carousels/` | The skill: `SKILL.md`, ten reference pages and its own copy of every example |
+| `skills/business-carousels/` | The skill: `SKILL.md`, ten reference pages, its own copy of every example, and `scripts/slides.py`, which draws type-led and photo-led slides at the exact size with text that fits, checks every slide's size before posting, and numbers approved slides in posting order |
 | [SETUP-PROMPT.md](SETUP-PROMPT.md) | The setup for Claude Code and Codex, Mac and Windows: your agent follows it from this folder |
 | [PROMPT.md](PROMPT.md) | One copy-paste prompt that works in any chat |
 | [QUICKSTART.md](QUICKSTART.md) | Setup notes for Claude, Claude Code, ChatGPT and Codex |
@@ -69,7 +69,8 @@ Examples 01 to 15 are fictional demonstrations: invented businesses and generate
 
 ## Good to know
 
-- The skill doesn't add image generation to your assistant. It uses what your app already has, and says so when it can't make an image.
+- The skill doesn't add image generation to your assistant. It uses what your app already has, and says so when it can't make an image. In Claude Code and Codex it can still draw type-led slides, or text over your own photos, with the browser already on your computer.
+- Before a set is called ready, every slide is checked for the platform's exact size and shape. Image tools often make 1024x1536 pictures, which Instagram would crop.
 - It never posts, sends or publishes anything.
 - Apps and plans differ. If something doesn't match these notes, ask your assistant to check its available tools and retry.
 
