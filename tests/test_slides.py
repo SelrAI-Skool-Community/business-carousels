@@ -361,6 +361,21 @@ class CommandLine(Base):
         self.assertIsNone(slides.find_browser(env={}, exists=lambda p: False, which=lambda n: None, system="linux"))
         self.assertIsNone(slides.find_browser(env={"CAROUSEL_BROWSER": "/nope"}, exists=lambda p: False, which=lambda n: None))
 
+    def test_the_browser_never_asks_for_a_keychain(self):
+        cmd = slides.browser_command("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/tmp/profile", ["--dump-dom", "file:///x.html"])
+        self.assertIn("--headless=new", cmd)
+        self.assertIn("--use-mock-keychain", cmd)
+        self.assertIn("--password-store=basic", cmd)
+        self.assertIn("--user-data-dir=/tmp/profile", cmd)
+        self.assertEqual(cmd[-2:], ["--dump-dom", "file:///x.html"])
+        calls = []
+        real = slides.subprocess.run
+        slides.subprocess.run = lambda cmd, **kw: calls.append(cmd)
+        self.addCleanup(setattr, slides.subprocess, "run", real)
+        slides._browser("chrome", ["--dump-dom", "file:///x.html"])
+        self.assertIn("--use-mock-keychain", calls[0])
+        self.assertIn("--password-store=basic", calls[0])
+
 
 @unittest.skipUnless(slides.find_browser(), "no Chrome, Edge, Chromium or Brave on this computer")
 class Render(Base):

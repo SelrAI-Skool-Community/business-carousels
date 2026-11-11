@@ -417,12 +417,17 @@ def find_browser(env=os.environ, exists=os.path.isfile, which=shutil.which, syst
     return None
 
 
+def browser_command(browser, profile, args):
+    # The mock keychain and basic password store stop macOS asking for a keychain for the throwaway profile.
+    return [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
+            "--use-mock-keychain", "--password-store=basic",
+            "--force-device-scale-factor=1", f"--user-data-dir={profile}", "--virtual-time-budget=4000", *args]
+
+
 def _browser(browser, args, timeout=60):
     profile = tempfile.mkdtemp(prefix="slides-profile-")
     try:
-        cmd = [browser, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
-               "--force-device-scale-factor=1", f"--user-data-dir={profile}", "--virtual-time-budget=4000", *args]
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return subprocess.run(browser_command(browser, profile, args), capture_output=True, text=True, timeout=timeout)
     finally:
         shutil.rmtree(profile, ignore_errors=True)
 
