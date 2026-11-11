@@ -21,13 +21,14 @@ A plan for `render` (paths are relative to the plan file; only "headline" is req
               "font_file": "fonts/Brand-Bold.ttf", "body_font_file": "fonts/Brand-Regular.ttf",
               "handle": "@harbourplumbing"},
     "slides": [
-      {"headline": "Your drain keeps blocking", "support": "Here's why.", "image": "scene.jpg", "place": "bottom"},
+      {"headline": "Your drain keeps blocking. Here's why.", "highlight": "Here's why.", "image": "scene.jpg", "place": "bottom"},
       {"label": "Cause 1", "headline": "Tree roots in old clay pipes", "place": "center"},
       {"headline": "Want the checklist?", "support": "Comment DRAINS", "keyword": "DRAINS"}
     ]
   }
 
-"place" is top, center or bottom. Without a font file, "font" names an installed font.
+"place" is top, center or bottom. "highlight" is words in the headline to print in the
+brand accent colour, usually the payoff. "keyword" is a comment word to box in the accent. Without a font file, "font" names an installed font.
 Text is sized as large as fits and never below about 20 points (headline) or 12
 points (other text) on a phone; a slide that cannot fit saves nothing and says so.
 Files come out as 01-<name>.png, 02-<name>.png ... at the platform's exact size.
@@ -174,7 +175,7 @@ def readable_text(preferred, background):
 
 
 # ── Plans ───────────────────────────────────────────────────────────────
-SLIDE_KEYS = {"headline", "support", "label", "image", "place", "keyword", "note"}
+SLIDE_KEYS = {"headline", "support", "label", "image", "place", "keyword", "highlight", "note"}
 BRAND_KEYS = {"background", "text", "accent", "font", "font_file", "body_font", "body_font_file", "handle"}
 
 
@@ -223,6 +224,8 @@ def check_plan(plan, base=Path(".")):
             errors.append(f'Slide {n}: "place" is top, center or bottom.')
         if s.get("image") and not (base / Path(os.path.expanduser(s["image"]))).is_file():
             errors.append(f"Slide {n}: the image {s['image']} is not there.")
+        if s.get("highlight") and s["highlight"].lower() not in s["headline"].lower():
+            errors.append(f'Slide {n}: the highlight "{s["highlight"]}" is not in its headline.')
         if s.get("keyword") and s["keyword"].lower() not in (s["headline"] + " " + s.get("support", "")).lower():
             errors.append(f'Slide {n}: the keyword "{s["keyword"]}" is not in its headline or support line.')
         for key in ("headline", "support", "label"):
@@ -310,6 +313,9 @@ def slide_html(plan, index):
 
     headline = html.escape(s["headline"])
     support = html.escape(s.get("support", ""))
+    if s.get("highlight"):
+        hl = re.compile(re.escape(html.escape(s["highlight"])), re.IGNORECASE)
+        headline = hl.sub(lambda m: f'<span style="color:{accent_text}">{m.group(0)}</span>', headline, count=1)
     if s.get("keyword"):
         kw = html.escape(s["keyword"])
         box = (f'<span style="background:{accent};color:{readable_text("#111111", accent)};padding:0 0.18em;'
@@ -320,7 +326,8 @@ def slide_html(plan, index):
     footer_h = round(110 * u) if b.get("handle") else pad
     justify = {"top": "flex-start", "center": "center", "bottom": "flex-end"}[place]
     smallest = min(FLOOR[k] / BASE[k] for k in ("headline", "support", "label"))
-    parts = []
+    # A short rule in the brand colour over every headline ties the set together.
+    parts = [f'<div style="width:calc(var(--s) * {84*u:.1f}px);height:calc(var(--s) * {10*u:.1f}px);background:{accent};margin-bottom:calc(var(--s) * {34*u:.1f}px)"></div>']
     if s.get("label"):
         parts.append(f'<div style="{sized("label", f"font-family:{body_font};font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{accent_text};margin-bottom:calc(var(--s) * {18*u:.1f}px)")}">{html.escape(s["label"])}</div>')
     parts.append(f'<div style="{sized("headline", f"font-family:{head_font};font-weight:800;line-height:1.02;letter-spacing:-0.01em;color:{text};overflow-wrap:normal;word-break:normal")}">{headline}</div>')

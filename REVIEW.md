@@ -17,7 +17,7 @@ Every PNG original was viewed at full size and again at phone size (432 × 540).
 
 - Every relative link in every Markdown file resolves. Links inside the skill stay inside the skill folder, so the installed skill is self-contained.
 - Privacy scan: no personal names, emails, phone numbers, handles, private paths, credentials, internal tools or ask-a-person fallbacks in any text file.
-- `SKILL.md` name `business-carousels`; description 181 characters (Claude's upload limit is 200).
+- `SKILL.md` name `business-carousels`; description 195 characters (Claude's upload limit is 200).
 - Each skill image is a quality-90 JPEG at original resolution of its PNG original (PSNR 38 to 44 dB); hashes of all 15 PNG originals are recorded in `index.json` and re-checked.
 - The Claude upload ZIP of the skill folder (built separately, not stored in the repository): integrity test passed, skill folder at the archive root, contents identical to the folder (27 files, about 5 MB).
 - `gallery.html`: all 15 images load; no sideways scrolling at 375 px phone width.

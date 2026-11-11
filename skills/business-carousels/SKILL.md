@@ -1,6 +1,6 @@
 ---
 name: business-carousels
-description: Plan, design, check and finish social media carousels for a business (Instagram, LinkedIn, Facebook). Use when someone asks for a carousel, slides for a post, to turn a reel, post, article or notes into a carousel, to make carousel images, or to get slides ready to post. Keeps the source's hook and facts, plans the slides in chat first, makes slides that teach with the tools this session really has, and checks every file's size before it is called ready.
+description: Plan, make and check social carousels for a business. Use for a carousel, post slides, or turning a reel, post, article or notes into one. Plans first, keeps the facts, checks every slide's size.
 ---
 
 # Business carousels
@@ -32,7 +32,7 @@ Read [slide design](references/slide-design.md). Plan headline, imagery, logos, 
 Read [tool routes](references/tool-routes.md). Check this session's real tools; do not assume a model can make photographs, and never install services, ask for keys or switch providers.
 
 - An image tool: generate whole slides as planned, then inspect them.
-- No image tool, or a type-only or photo-led slide: write a plan file and run `slides.py render <plan.json> --out <folder>`. It uses the Chrome or Edge already on the computer, puts headline, support line, label and comment keyword in clear space over a colour or the person's own photo, in their font file if they have one. If it says a slide does not fit, cut words or split the slide.
+- No image tool, or a type-only or photo-led slide: write a plan file and run `slides.py render <plan.json> --out <folder>`. It uses the Chrome or Edge already on the computer, puts headline, support line, label and comment keyword in clear space over a colour or the person's own photo, in their font file if they have one. Set `highlight` to the payoff words of each headline so the brand colour carries through. If it says a slide does not fit, cut words or split the slide.
 - No way to make images at all: give the approved copy and one complete generation prompt per slide.
 
 Say which tool made each image.

@@ -110,6 +110,7 @@ class Plans(Base):
             (self.plan(slides=[{"headline": "Hi", "place": "left"}]), "top, center or bottom"),
             (self.plan(slides=[{"headline": "Hi", "image": "missing.jpg"}]), "missing.jpg is not there"),
             (self.plan(slides=[{"headline": "Comment now", "keyword": "GUIDE"}]), 'keyword "GUIDE" is not in'),
+            (self.plan(slides=[{"headline": "Roots in pipes", "highlight": "drains"}]), 'highlight "drains" is not in'),
             (self.plan(brand={"accent": "yellow"}), "must be a colour"),
             (self.plan(brand={"font_file": "nope.ttf"}), "nope.ttf is not there"),
             (self.plan(slides=[{"headline": "x"}] * 21), "at most 20 slides"),
@@ -134,6 +135,11 @@ class Plans(Base):
         self.assertIn("Tom &amp; Jo &lt;b&gt;", page)
         self.assertRegex(page, r"<span style=\"background:#F5C518[^>]*>GUIDE</span>")
         self.assertIn("width:1080px; height:1350px", page)
+
+    def test_the_highlight_prints_in_the_brand_colour(self):
+        p = slides.check_plan(self.plan(brand={"background": "#0B1F33", "accent": "#F5C518"}, slides=[{"headline": "Your drain keeps blocking. Here's why.", "highlight": "Here's why."}]), self.root)
+        page, _ = slides.slide_html(p, 0)
+        self.assertIn('<span style="color:#F5C518">Here&#x27;s why.</span>', page)
 
     def test_text_colour_always_reads_on_the_background(self):
         self.assertEqual(slides.readable_text("#F5C518", "#F5F0EB"), "#111111")
