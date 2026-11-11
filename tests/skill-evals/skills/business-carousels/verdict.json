@@ -5,12 +5,12 @@
   "judge": "sonnet",
   "runs": 3,
   "words": 643,
-  "skillHash": "4932da404f545fbf",
+  "skillHash": "058eb0e980885543",
   "suiteHash": "0ce07174866419e5",
   "cases": {
-    "no-image-tool": {"with":1,"without":0.67,"loaded":1},
+    "no-image-tool": {"with":1,"without":0.33,"loaded":1},
     "plan-first": {"with":1,"without":0,"loaded":1},
-    "wrong-size": {"with":1,"without":1,"loaded":1}
+    "wrong-size": {"with":1,"without":0.67,"loaded":1}
   },
   "checked": "2026-11-11",
   "claude": "2.1.322"
