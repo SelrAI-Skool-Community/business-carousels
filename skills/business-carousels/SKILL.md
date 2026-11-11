@@ -1,49 +1,49 @@
 ---
 name: business-carousels
-description: Plan, design and check social carousels for any business. Keeps the source's hook and facts, plans slides in chat, designs whole slides that teach, and uses only the tools you have.
+description: Plan, design, check and finish social media carousels for a business (Instagram, LinkedIn, Facebook). Use when someone asks for a carousel, slides for a post, to turn a reel, post, article or notes into a carousel, to make carousel images, or to get slides ready to post. Keeps the source's hook and facts, plans the slides in chat first, makes slides that teach with the tools this session really has, and checks every file's size before it is called ready.
 ---
 
 # Business carousels
 
-Turn an idea, reel, carousel, article or set of notes into a carousel that ordinary business owners understand at a glance. One shared workflow for every host. The route changes with the tools the session actually has, never the standard.
+Turn an idea, reel, carousel, article or notes into a carousel a busy business owner understands at a glance. The route changes with the tools this session has; the standard does not.
 
-## 1. Understand the source first
+`scripts/slides.py` in this skill's folder does the fixed steps: platform sizes and slide limits (`sizes`), rendering type-led or photo-led slides at the exact size with text fitted and readable on a phone (`render`), checking any set of slide images (`check`), and numbering approved files into `final/` (`finalise`). Run it with `python3` (Windows: `py`). Its docstring shows the plan format.
 
-Read [source and plan](references/source-and-plan.md). Before rewriting anything, extract the hook, memorable wording, examples, numbers (with units and dates), necessary qualifications and the order things are revealed. Keep what makes the framing work. Mark which statements are source facts and which are your hypothetical examples. If the source cannot be opened, say what is missing; never invent its content.
+## 1. Understand the source
 
-## 2. Plan in chat before making anything
+Read [source and plan](references/source-and-plan.md). Before rewriting, note the hook, memorable wording, examples, numbers (with units, dates and the place or group they apply to), qualifications and reveal order. Keep what makes the framing work. Mark source facts apart from your own examples. If the source cannot be opened, say what is missing; never invent its content.
 
-Show a slide-by-slide plan: headline, one short supporting line where needed, essential labels, and what each visual will explain. Plain words a busy owner understands. The story decides the slide count. Wait for approval unless this exact plan is already approved.
+## 2. Plan in chat first
+
+Show a slide-by-slide table: headline, one short supporting line where needed, essential labels, and what each visual explains. Plain words. The story sets the slide count. Then stop and wait for approval, unless this exact plan is already approved. Never add a price, statistic, guarantee or claim the source did not make.
 
 ## 3. Design each whole slide
 
-Read [slide design](references/slide-design.md). Plan headline, imagery, relevant logos, explanatory objects, annotations and empty space together before the first render. Never put default text on a finished background. An exact type layer for spelling or fonts is fine when it follows the planned composition. Interiors get the same care as the cover.
+Read [slide design](references/slide-design.md). Plan headline, imagery, logos, labels and empty space together. Visuals teach: real examples, the relevant app screen, a comparison, a diagram. Numbers carry units and context. Measured charts use accurate geometry; artistic comparisons say "Illustrative comparison". Interiors get the same care as the cover.
 
-Visuals must teach: real examples, the relevant app screen, a comparison or a diagram. Arrows connect meaningful things. Numbers carry units and context. Measured charts use accurate geometry; artistic comparisons are labelled "Illustrative comparison".
+## 4. Brand, people and the promise
 
-## 4. Respect the brand, the people and the promise
+- Brand: [brand and identity](references/brand-and-identity.md). Use the business's colours, fonts and logos; generated lettering is not the brand font.
+- People: [people](references/people.md). Believable, ordinary, never presented as staff, customers or testimonials.
+- Ending: [CTA and revisions](references/cta-and-revisions.md). A comment keyword stands out and matches a resource that really exists. Never imply an automation or download that is not set up.
 
-- Brand: [brand and identity](references/brand-and-identity.md). Preserve supplied fonts, handwriting, colours and logos. Generated lettering is not an exact font. Use a recognised brand's genuine look where it matters to the explanation.
-- People: [people](references/people.md). Believable ordinary people, natural skin, careful anatomy. For Australian briefs, local settings and a range of people; never infer nationality from appearance. Fictional people are never staff, customers or testimonials.
-- Ending: [CTA and revisions](references/cta-and-revisions.md). A comment keyword stands out visually and matches a resource that really exists. Never invent a download or automation.
+## 5. Make the slides with the tools you have
 
-## 5. Use the tools you actually have
+Read [tool routes](references/tool-routes.md). Check this session's real tools; do not assume a model can make photographs, and never install services, ask for keys or switch providers.
 
-Read [tool routes](references/tool-routes.md) before producing images. Keep the model the user selected. Check the session's real tools; do not assume a model can make photographs. Use an authorised image tool if present; otherwise explain the limit and give a complete generation prompt, or build with supplied photos or SVG/HTML when that suits. Never install paid services, ask for API keys or switch providers silently. Say which tool produced each image.
+- An image tool: generate whole slides as planned, then inspect them.
+- No image tool, or a type-only or photo-led slide: write a plan file and run `slides.py render <plan.json> --out <folder>`. It uses the Chrome or Edge already on the computer, puts headline, support line, label and comment keyword in clear space over a colour or the person's own photo, in their font file if they have one. If it says a slide does not fit, cut words or split the slide.
+- No way to make images at all: give the approved copy and one complete generation prompt per slide.
 
-## 6. Revise without breaking approved work
+Say which tool made each image.
 
-A title change changes the type, not the scene. Keep important figures. Store `final/`, `alternates/` and `trials/` separately.
+## 6. Check, then finish
 
-## 7. Check before calling it done
+Run [qa](references/qa.md) on the real files, at full size and at phone size. Run `slides.py check <folder> --platform <name>` on every set, whatever made it: image tools often return 1024x1536, which Instagram crops. Fix what it names. When the person approves, `slides.py finalise <files in posting order> --project <folder> --name <name> --platform <name>` numbers them into `final/`; earlier finals move to `alternates/`, never overwritten. A wording change keeps the approved scene.
 
-Run [qa](references/qa.md) on the actual files at full size and at phone size (about 430 px wide): spelling, figures, anatomy, readability, collisions and composition. Say what you inspected and what you could not.
+Say what you inspected and what you could not. Publishing and sending stay separate steps the person approves.
 
-## Style and examples
-
-[Style options](references/style-options.md) offers a few short starting directions. [Examples](references/examples.md) shows 15 bundled images with what each teaches; [example prompts](references/example-prompts.md) has the prompts that made them. Examples show possibilities. Their colours, people, wording and layouts are never defaults.
-
-Publishing and sending stay separate, user-approved steps.
+[Style options](references/style-options.md), [examples](references/examples.md) and [example prompts](references/example-prompts.md) show possibilities; their colours, people, wording and layouts are never defaults.
 
 Made by Selr AI.
 

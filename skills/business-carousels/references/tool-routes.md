@@ -27,9 +27,9 @@ Measured charts need code or a locked geometry guide whichever route you use. Ex
 ## Host notes
 
 - **Claude (claude.ai and apps):** plans, writes and builds diagrams, charts and visuals with HTML and SVG, and can view uploaded images. Claude itself does not generate photos or photoreal illustrations; that needs a separate image tool or connector in the session. A photo-led layout using the user's real photo is a good route.
-- **Claude Code:** reads this skill from disk and can write and render HTML/SVG locally if a browser or renderer is installed. Raster generation only through an image tool or MCP server that is already connected.
+- **Claude Code:** reads this skill from disk. `scripts/slides.py render` draws type-led and photo-led slides at the exact size with the Chrome or Edge already on the computer. Raster generation only through an image tool or MCP server that is already connected.
 - **ChatGPT:** can usually generate and edit images in the conversation when the account has that feature. Use it for whole-slide scenes; check spelling and figures afterwards.
-- **Codex:** reads this skill from disk. Some environments include a built-in image generation tool; others do not. Check before promising images.
+- **Codex:** reads this skill from disk and can run `scripts/slides.py` the same way. Some environments include a built-in image generation tool; others do not. Check before promising images.
 
 Features vary by plan, account and date. Trust the tools you can see, not these notes.
 
