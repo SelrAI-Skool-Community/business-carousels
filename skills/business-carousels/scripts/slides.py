@@ -6,6 +6,7 @@
   slides.py check <folder> --platform <name>       every image the right size, count and order
   slides.py finalise <image>... --project <folder> --name <slug> --platform <name>
                                                    approved files into final/, in posting order
+  slides.py selftest                               render one test slide in a temporary folder
 
 Python 3.9 or newer, standard library only, on Mac, Windows (py) and Linux. `render`
 uses a Chrome, Edge, Chromium or Brave already on the computer, headless; it
@@ -497,6 +498,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog="slides.py", description="The fixed steps of a business carousel.", allow_abbrev=False)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("sizes", allow_abbrev=False, help="platform sizes and slide limits")
+    sub.add_parser("selftest", allow_abbrev=False, help="render one test slide in a temporary folder")
     r = sub.add_parser("render", allow_abbrev=False, help="render a plan's slides with text fitted")
     r.add_argument("plan")
     r.add_argument("--out", required=True)
@@ -516,6 +518,16 @@ def main(argv=None):
             for key, (w, h, most, label) in PLATFORMS.items():
                 print(f"{key:20} {w}x{h}  {label}, up to {most} slides")
             print("A cover or single image: use the same size, one slide.")
+        elif args.cmd == "selftest":
+            browser = find_browser()
+            if not browser:
+                raise Stop("No Chrome, Edge, Chromium or Brave found, so render cannot draw slides here. "
+                           "Everything else works; slides from an image tool can still be checked and finalised.")
+            with tempfile.TemporaryDirectory() as tmp:
+                plan = check_plan({"name": "test", "slides": [{"headline": "Test slide", "support": "If you can read this, rendering works."}]}, Path(tmp))
+                names = render(plan, Path(tmp) / "out", browser=browser, log=lambda *_: None)
+                size = image_size(Path(tmp) / "out" / names[0])
+            print(f"ok: rendered a {size[0]}x{size[1]} test slide with {browser}")
         elif args.cmd == "render":
             plan = load_plan(args.plan)
             render(plan, args.out, dry_run=args.dry_run)

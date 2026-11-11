@@ -229,6 +229,13 @@ class CommandLine(Base):
         code, out = run("check", str(self.root / "missing"), "--platform", "instagram-portrait")
         self.assertEqual(code, 2)
 
+    def test_selftest_without_a_browser_says_what_still_works(self):
+        os.environ["CAROUSEL_BROWSER"] = str(self.root / "no-browser")
+        self.addCleanup(os.environ.pop, "CAROUSEL_BROWSER", None)
+        code, out = run("selftest")
+        self.assertEqual(code, 2)
+        self.assertIn("can still be checked and finalised", out)
+
     def test_finding_a_browser_on_each_system(self):
         mac = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
         self.assertEqual(slides.find_browser(env={}, exists=lambda p: p == mac, which=lambda n: None, system="darwin"), mac)
